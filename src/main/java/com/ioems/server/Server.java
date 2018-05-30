@@ -7,7 +7,7 @@ import java.util.*;
 public class Server {
     public void start() throws IOException {
         ServerSocket serverSocket = new ServerSocket(3000);
-        List<ClientHandler> list = Collections.synchronizedList(new ArrayList<>());
+        List<ClientHandler> list = new ArrayList<>();
         Runnable clientHandlerListener = new ClientHandlerListener(list);
         Thread thread = new Thread(clientHandlerListener);
         thread.start();

@@ -3,37 +3,49 @@ package com.ioems.server;
 import java.io.*;
 import java.net.Socket;
 
+class ClientHandler implements AutoCloseable {
 
-class ClientHandler {
-
-    private Socket clientSocket;
+    private boolean closed = false;
+    private BufferedReader socketReader;
+    private BufferedWriter socketWriter;
 
     ClientHandler(Socket clientSocket) {
-        this.clientSocket = clientSocket;
-    }
-
-    Socket getClientSocket() {
-        return clientSocket;
+        try {
+            socketReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            socketWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void handle() throws IOException {
-        BufferedReader socketReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        BufferedWriter socketWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
         ServerReader serverReader = new ServerReader(socketReader);
         ServerWriter serverWriter = new ServerWriter(socketWriter);
         String message = serverReader.readMessageFromClient();
         if ("bye".equals(message)) {
             serverWriter.sendMessageToClient(message);
-            socketReader.close();
-            socketWriter.close();
-            clientSocket.close();
+            try {
+                close();
+            } catch (Exception e) {
+                throw new RuntimeException("error while closing client,", e);
+            }
         } else {
             serverWriter.sendMessageToClient("echo" + message);
         }
     }
 
     boolean isProcessable() throws IOException {
-        int countAvailableBytes = clientSocket.getInputStream().available();
-        return countAvailableBytes > 0;
+        return socketReader.ready();
+    }
+
+    @Override
+    public void close() throws Exception {
+        socketReader.close();
+        socketWriter.close();
+        closed = true;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }
