@@ -14,7 +14,7 @@ class ClientHandler implements AutoCloseable {
             socketReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             socketWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("error when initializing clientHandler",e);
         }
     }
 
